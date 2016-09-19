@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+ 		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+ 		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+ 		http://www.springframework.org/schema/tx
+ 		http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+ 		http://www.springframework.org/schema/jee
+ 		http://www.springframework.org/schema/jee/spring-jee-3.2.xsd
+ 		http://www.springframework.org/schema/context
+ 		http://www.springframework.org/schema/context/spring-context-3.2.xsd
+ 		http://www.springframework.org/schema/util
+        http://www.springframework.org/schema/util/spring-util-3.0.xsd"
+	default-autowire="byName">
+
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="order" value="1" />
+		<property name="locations">
+			<list>
+				<value>classpath:com\it\context\dbContext.properties</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass">
+			<value>${db.driverClassName}</value>
+		</property>
+		<property name="jdbcUrl">
+			<value>${db.url}</value>
+		</property>
+		<property name="user">
+			<value>${db.username}</value>
+		</property>
+		<property name="password">
+			<value>${db.password}</value>
+		</property>
+		<property name="minPoolSize">
+			<value>${db.minPoolSize}</value>
+		</property>
+		<property name="acquireIncrement">
+			<value>${db.acquireIncrement}</value>
+		</property>
+		<property name="maxPoolSize">
+			<value>${db.maxPoolSize}</value>
+		</property>
+		<property name="idleConnectionTestPeriod">
+			<value>3000</value>
+		</property>
+		<property name="initialPoolSize">
+			<value>${db.initialPoolSize}</value>
+		</property>
+		<property name="maxIdleTime">
+			<value>0</value>
+		</property>
+	</bean>
+
+	<bean id="sessionFactory" class="com.it.common.component.db.AppSessionFactory">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+				<prop key="hibernate.show_sql">false</prop>
+			</props>
+		</property>
+		<property name="mappingResources">
+			<list></list>
+		</property>
+	</bean>
+	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate" />
+
+	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager" />
+	<bean name="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" />
+
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="update*" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="del*" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="*" propagation="SUPPORTS" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	
+	<aop:config proxy-target-class="false">
+		<aop:pointcut expression="execution(* com.it.apps..*Bo.*(..) )"  id="txPointcut" />
+		<aop:advisor pointcut-ref="txPointcut" advice-ref="txAdvice" />
+	</aop:config>
+
+	<bean id="logBefore" class="com.it.common.component.log.LogBeforeAdvisor"></bean>
+	<bean id="logAfter" class="com.it.common.component.log.LogAfterAdvisor"></bean>
+	<bean id="logError" class="com.it.common.component.log.LogThrowsAdvisor"></bean>
+	<aop:config>
+		<aop:pointcut expression="execution(* com.it.apps..*.*(..))" id="netLog" />
+		<aop:advisor pointcut-ref="netLog" advice-ref="logBefore" />
+		<aop:advisor pointcut-ref="netLog" advice-ref="logAfter" />
+		<aop:advisor pointcut-ref="netLog" advice-ref="logError" />
+	</aop:config>
+
+	<!-- use-dafault-filters=”true”的情况下： <context:exclude-filter>指定的不扫描  这里注入service和Repository bean-->
+	<context:component-scan base-package="com.it.apps" use-default-filters="true">
+  		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	<bean name="baseDao" class="com.it.common.component.db.BaseDao" />
+	
+
+</beans>
