@@ -38,7 +38,7 @@ public class BaseCo {
 					String fName = f.getName();
 					String[] values = request.getParameterValues(fName);
 					try{
-						if(values!=null && values.length>0){
+						if(values!=null && values.length>1){
 							if(first){
 								for(int j=0; j<values.length; j++){
 									T t = cls.newInstance();
