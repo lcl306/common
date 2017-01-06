@@ -58,6 +58,16 @@ public class BaseCo {
 						LogPrint.error(e.getMessage());
 					}
 				}
+				if(list.isEmpty()){
+					try {
+						T t = cls.newInstance();
+						bind(request, t);
+						list.add(t);
+					} catch (InstantiationException | IllegalAccessException e) {
+						LogPrint.error(e.getMessage());
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 	}
