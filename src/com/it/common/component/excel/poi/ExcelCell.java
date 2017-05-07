@@ -101,6 +101,20 @@ public class ExcelCell {
 		   */		
 		style.setFont(font);  
 	}
+	
+	/**
+	 * 如果多个cell共用一个style，如果想某个cell改变颜色，其它cell不变，调用该方法
+	 * */
+	public void setColor(short color){
+		if(cell!=null){
+			CellStyle style = document.getWorkbook().createCellStyle();
+			style.cloneStyleFrom(cell.getCellStyle());
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+			style.setFillForegroundColor(color);
+			cell.setCellStyle(style);
+		}
+	}
+	
 	/**
 	 * 设置单元格填充颜色
 	 * @param bkColor
